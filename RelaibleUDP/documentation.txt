@@ -1,0 +1,181 @@
+Documentation for msocket.h:
+
+
+p              Transmissions           Messages
+0.05           250                     240
+0.1            268                     240
+0.15           272                     240
+0.2            290                     240
+0.25           301                     240
+0.3            319                     240
+0.35           321                     240
+0.4            336                     240
+0.45           356                     240
+0.5            367                     240
+
+
+Data Structures:
+1. swnd:
+   - Description: Structure representing the sender-side window.
+   - Fields:
+     - wndsize: Integer indicating the size of the window.
+     - sequence: Array of integers representing the sequence numbers of messages.
+     - currframe: Integer indicating the current frame.
+
+2. rwnd:
+   - Description: Structure representing the receiver-side window.
+   - Fields:
+     - wndsize: Integer indicating the size of the window.
+     - sequence: Array of integers representing the sequence numbers of messages.
+
+3. buffer:
+   - Description: Structure representing a message buffer.
+   - Fields:
+     - frame: Integer representing the frame number.
+     - ack: Integer indicating if the acknowledgment for the message is received or not.
+     - isbusy: Integer indicating if the buffer is currently in use.
+     - data: Array of characters representing the message data.
+
+4. sendmsgbuffer:
+   - Description: Structure representing the sender-side message buffer.
+   - Fields:
+     - size: Integer indicating the size of the buffer.
+     - next: Integer representing the index of the next message.
+     - nextframed: Integer representing the index of the next frame.
+     - lastsent: Struct timeval representing the time when the last message was sent.
+     - data: Array of buffer structures.
+
+5. recvmsgbuffer:
+   - Description: Structure representing the receiver-side message buffer.
+   - Fields:
+     - insertloc: Integer indicating the index where the next message will be inserted.
+     - fetchloc: Integer indicating the index from where the next message will be fetched.
+     - insertsize: Integer indicating the size of the inserted message.
+     - togetframe: Integer indicating the expected frame number to be received by the R thread.
+     - readframe: Integer indicating the frame to read by the m_receive call on client side.
+     - fetchsize: Integer indicating the maximum number of messages that can be fetched.
+     - data: Array of buffer structures.
+
+6. mtp_socket:
+   - Description: Structure representing an MTP socket.
+   - Fields:
+     - isfree: Integer indicating if the socket is free.
+     - pid: Process ID of the process that created the socket.
+     - sockfd: Integer representing the socket file descriptor.
+     - destIP: Array of characters representing the destination IP address.
+     - destport: Integer representing the destination port.
+     - sendbuffer: Structure representing the sender-side message buffer.
+     - receivebuffer: Structure representing the receiver-side message buffer.
+     - sendwnd: Structure representing the sender-side window.
+     - recvwnd: Structure representing the receiver-side window.
+
+
+7. SOCK_INFO:
+   - Description: to communicate between msocket.c and initmsocket.c , for creation of socket
+   -Fields:
+      -sockfd: Represents the socket file descriptor used for socket operations.
+      - IP: Stores the IP address associated with the socket.
+      -port: Holds the port number of the socket.
+      -errn: Represents an error number or status code related to socket operations.
+
+
+msocket.c Functions:
+1. m_socket:
+   - Description: Function to open an MTP socket.
+   - Parameters: domain, type, protocol.
+   - Return Value: Integer representing the socket file descriptor.
+
+2. m_bind:
+   - Description: Function to bind a socket to an address.
+   - Parameters: msock, srcIP, srcPort, destIP, destPort.
+   - Return Value: Integer representing success or failure.
+
+3. m_sendto:
+   - Description: Function to send data through an MTP socket.
+   - Parameters: sockfd, msg, len, flags, to, tolen.
+   - Return Value: Integer representing the number of bytes sent.
+
+4. m_recvfrom:
+   - Description: Function to receive data through an MTP socket.
+   - Parameters: sockfd, buf, len, flags, from, fromlen.
+   - Return Value: Integer representing the number of bytes received.
+
+5. m_close:    // Not Functional
+   - Description: Function to close an MTP socket.
+   - Parameters: sockfd.
+   - Return Value: None.
+
+
+
+
+Documentation for initmsocket.c:
+
+Functions:
+1. init:
+   - Description: Function to initialize shared memory, semaphores, and start threads for socket communication.
+   - Parameters: None.
+   - Return Value: None.
+
+2. is_data_message:
+   - Description: Function to check if a received message is a data message.
+   - Parameters: msg.
+   - Return Value: Integer (1 if it's a data message, 0 otherwise).
+
+3. is_ack_message:
+   - Description: Function to check if a received message is an acknowledgment message.
+   - Parameters: msg.
+   - Return Value: Integer (1 if it's an acknowledgment message, 0 otherwise).
+
+4. datasendack:
+   - Description: Function to create an acknowledgment message for a received data message.
+   - Parameters: size, frame.
+   - Return Value: String representing the acknowledgment message to be sent for a 
+
+5. initializebuffers:
+   - Description: Function to initialize the shared memory buffers.
+   - Parameters: sock.
+   - Return Value: None.
+
+6. Rthreadfunc:
+   - Description: Thread function to handle receiving data on the MTP socket.
+   - Parameters: arg.
+   - Return Value: None.
+
+7. Sthreadfunc:
+   - Description: Thread function to handle sending data on the MTP socket.
+   - Parameters: arg.
+   - Return Value: None.
+
+8. garbagecollector:
+   - Description: Thread function to clean up terminated socket processes.
+   - Parameters: arg.
+   - Return Value: None.
+
+9. dropMessage:
+   - Simulates dropping a message or packet during transmission.
+
+10. noofackleft
+   - Calculates the number of acknowledgments left to be received based on the send message buffer.
+
+11. header_ack
+   - Constructs an acknowledgment header based on the provided frame number and data.
+
+12. timedifference
+   - Calculates the time difference between two struct timeval timestamps.
+
+
+* Our frame format is first 2 bytes for remaining window size, next two for frame number, and remaining(if any ) for data(in case of ACK only 4 bytes)
+
+
+
+
+##### Instructions to run #######
+// You should have test1.txt in your directory for user1 to read
+make clean
+make all
+./initmsocket (Terminal 1)
+./user1 (Terminal 2) Wait Until Socket Created Hurrah!!!
+./user2 (Terminal 3) After Socket of user1 created succesfully then only run it
+
+
+In case of Binding Errors repeat the process
